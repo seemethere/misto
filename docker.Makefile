@@ -9,3 +9,10 @@ clean:
 
 build:
 	$(DOCKER_RUN) make $@
+
+.PHONY: clean-vendor
+clean-vendor:
+	$(DOCKER_RUN) make $@
+
+vendor:
+	$(DOCKER_RUN) sh -c 'curl https://glide.sh/get | sh; make $@'
