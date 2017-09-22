@@ -23,3 +23,7 @@ vendor:
 
 lint:
 	gometalinter --vendor ./...
+
+.PHONY: test
+test:
+	go test -v

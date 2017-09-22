@@ -36,7 +36,7 @@ func check(err error) {
 // Error codes are as follows:
 //  * 1 = Leading tab(s) with following space(s)
 //  * 2 = Leading space(s) with following tab(s)
-func determineErrorCode(line string) int {
+func DetectMixedIndent(line string) int {
 	errorCode := 0
 	if match := leadingTabWithSpace.MatchString(line); match {
 		errorCode = 1
@@ -45,6 +45,12 @@ func determineErrorCode(line string) int {
 		errorCode = 2
 	}
 	return errorCode
+}
+
+func formatLine(line string) string {
+	formattedLine := strings.Replace(line, " ", "•", -1)
+	formattedLine = strings.Replace(formattedLine, "\t", "›   ", -1)
+	return formattedLine
 }
 
 func parseFile(filename string) {
@@ -61,14 +67,13 @@ func parseFile(filename string) {
 		linePrinted := false
 		printLine := func(errorCode int) {
 			if !linePrinted {
+				formattedLine := formatLine(line)
 				// Make tabs / spaces easier to see
-				formatted_line := strings.Replace(line, " ", "•", -1)
-				formatted_line = strings.Replace(formatted_line, "\t", "›   ", -1)
-				stdout(fmt.Sprintf("%s:%d:MST%d %s", filename, lineNo, errorCode, formatted_line))
+				stdout(fmt.Sprintf("%s:%d:MST%d %s", filename, lineNo, errorCode, formattedLine))
 				linePrinted = true
 			}
 		}
-		errorCode := determineErrorCode(line)
+		errorCode := DetectMixedIndent(line)
 		if errorCode != 0 {
 			printLine(errorCode)
 		}
