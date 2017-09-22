@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -60,7 +61,10 @@ func parseFile(filename string) {
 		linePrinted := false
 		printLine := func(errorCode int) {
 			if !linePrinted {
-				stdout(fmt.Sprintf("%s:%d:MST%d %s", filename, lineNo, errorCode, line))
+				// Make tabs / spaces easier to see
+				formatted_line := strings.Replace(line, " ", "•", -1)
+				formatted_line = strings.Replace(formatted_line, "\t", "›   ", -1)
+				stdout(fmt.Sprintf("%s:%d:MST%d %s", filename, lineNo, errorCode, formatted_line))
 				linePrinted = true
 			}
 		}
