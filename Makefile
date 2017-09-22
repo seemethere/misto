@@ -1,3 +1,4 @@
+GOFILES=misto.go
 BINARY_NAME?=misto
 
 .PHONY: all
@@ -9,7 +10,7 @@ clean:
 
 build: build/$(BINARY_NAME)
 
-build/$(BINARY_NAME): *.go
+build/$(BINARY_NAME): $(GOFILES)
 	mkdir -p build
 	go build -o $@ $?
 

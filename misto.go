@@ -31,6 +31,21 @@ func check(err error) {
 	}
 }
 
+// Determines error code for a given line
+// Error codes are as follows:
+//  * 1 = Leading tab(s) with following space(s)
+//  * 2 = Leading space(s) with following tab(s)
+func determineErrorCode(line string) int {
+	errorCode := 0
+	if match := leadingTabWithSpace.MatchString(line); match {
+		errorCode = 1
+	}
+	if match := leadingSpaceWithTab.MatchString(line); match {
+		errorCode = 2
+	}
+	return errorCode
+}
+
 func parseFile(filename string) {
 	inFile, err := os.Open(filename)
 	check(err)
@@ -49,11 +64,9 @@ func parseFile(filename string) {
 				linePrinted = true
 			}
 		}
-		if match := leadingTabWithSpace.MatchString(line); match {
-			printLine(1)
-		}
-		if match := leadingSpaceWithTab.MatchString(line); match {
-			printLine(2)
+		errorCode := determineErrorCode(line)
+		if errorCode != 0 {
+			printLine(errorCode)
 		}
 		lineNo++
 	}
