@@ -4,12 +4,15 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"regexp"
 
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
-	files = kingpin.Arg("files", "Files to parse through").Required().ExistingFiles()
+	files                  = kingpin.Arg("files", "Files to parse through").Required().ExistingFiles()
+	leadingTabWithSpace, _ = regexp.Compile("^\t+ +")
+	leadingSpaceWithTab, _ = regexp.Compile("^ +\t+")
 )
 
 // Output to stdout
@@ -39,7 +42,19 @@ func parseFile(filename string) {
 	lineNo := 0
 	for scanner.Scan() {
 		line := scanner.Text()
-		stdout(fmt.Sprintf("%s:%d %s", filename, lineNo, line))
+		linePrinted := false
+		printLine := func(errorCode int) {
+			if !linePrinted {
+				stdout(fmt.Sprintf("%s:%d:MST%d %s", filename, lineNo, errorCode, line))
+				linePrinted = true
+			}
+		}
+		if match := leadingTabWithSpace.MatchString(line); match {
+			printLine(1)
+		}
+		if match := leadingSpaceWithTab.MatchString(line); match {
+			printLine(2)
+		}
 		lineNo++
 	}
 	check(scanner.Err())
@@ -47,8 +62,7 @@ func parseFile(filename string) {
 
 func main() {
 	kingpin.Parse()
-
-	for _, filename := range *files {
-		parseFile(filename)
+	for _, file := range *files {
+		parseFile(file)
 	}
 }
