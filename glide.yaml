@@ -1,0 +1,4 @@
+package: github.com/seemethere/misto
+import:
+- package: gopkg.in/alecthomas/kingpin.v2
+  version: ~2.2.5
