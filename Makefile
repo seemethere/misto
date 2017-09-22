@@ -19,3 +19,6 @@ clean-vendor:
 
 vendor:
 	glide update
+
+lint:
+	gometalinter --vendor ./...
