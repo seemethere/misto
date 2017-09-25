@@ -16,3 +16,6 @@ clean-vendor:
 
 vendor:
 	$(DOCKER_RUN) sh -c 'curl https://glide.sh/get | sh; make $@'
+
+test:
+	$(DOCKER_RUN) make $@
