@@ -20,3 +20,20 @@ func TestDetectMixedIndent(t *testing.T) {
 		}
 	}
 }
+
+func TestDetectIndents(t *testing.T) {
+	testcase := []string{
+		"nomatch",
+		"nomatch",
+		"    nomatch",
+		"    nomatch",
+		"    nomatch",
+		"    nomatch",
+		"	match",
+		"	match",
+	}
+	_, majorityIndentStyle := DetectIndents(testcase)
+	if majorityIndentStyle != " " {
+		t.Errorf("Majority indent style reported incorrectly, expected SPACE and got TAB")
+	}
+}
