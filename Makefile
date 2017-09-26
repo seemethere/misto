@@ -1,6 +1,7 @@
 GOPATH?=$(shell go env GOPATH)
 GOX=$(GOPATH)/bin/gox
 GOLINT=$(GOPATH)/bin/golint
+GLIDE=$(GOPATH)/bin/glide
 PREFIX?=/usr/local/bin
 GOFILES=misto.go
 BINARY_NAME?=misto
@@ -24,22 +25,25 @@ $(GOX):
 .PHONY: cross
 cross: $(GOX)
 	mkdir -p build
-	gox -output="build/{{.Dir}}_{{.OS}}_{{.Arch}}"
+	$(GOX) -output="build/{{.Dir}}_{{.OS}}_{{.Arch}}"
 
 
 .PHONY: clean-vendor
 clean-vendor:
 	$(RM) -r vendor
 
-vendor:
-	glide update
+$(GLIDE):
+	go get github.com/Masterminds/glide
+
+vendor: $(GLIDE)
+	$(GLIDE) update
 
 $(GOLINT):
 	go get github.com/golang/lint/golint
 
 .PHONY: lint
 lint: $(GOFILES) $(GOLINT)
-	golint $<
+	$(GOLINT) $<
 
 .PHONY: test
 test:
