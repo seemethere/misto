@@ -12,13 +12,11 @@ import (
 
 var (
 	files                  = kingpin.Arg("files", "Files to parse through").Required().ExistingFiles()
-	indentation, _         = regexp.Compile(`^\s`)
+	indentation, _         = regexp.Compile(`^[ \t]`)
 	leadingTabWithSpace, _ = regexp.Compile(`^\t+ +`)
 	leadingSpaceWithTab, _ = regexp.Compile(`^ +\t+`)
 	space                  = " "
 	tab                    = "\t"
-	newline                = "\n"
-	cr                     = "\r"
 )
 
 // Output to stdout
@@ -76,14 +74,14 @@ func DetectIndents(lines []string) (fileLines []FileLine, majorityIndentStyle st
 	tabCount := 0
 	spaceCount := 0
 	for lineNumber, line := range lines {
+		// If the indent style doesn't match a SPACE or TAB
+		// this will return an empty string
 		indentStyle := indentation.FindString(line)
 		switch indentStyle {
 		case space:
 			spaceCount++
 		case tab:
 			tabCount++
-		case cr, newline:
-			indentStyle = ""
 		}
 		fileLines = append(
 			fileLines,
