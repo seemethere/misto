@@ -21,8 +21,8 @@ clean-vendor:
 vendor:
 	glide update
 
-lint:
-	gometalinter --vendor ./...
+lint: $(GOFILES)
+	golint $?
 
 .PHONY: test
 test:
