@@ -19,21 +19,10 @@ var (
 	tab                    = "\t"
 )
 
-// Output to stdout
-func stdout(msg string) {
-	_, err := fmt.Fprintln(os.Stdout, msg)
-	check(err)
-}
-
-// Output to stderr
-func stderr(msg string) {
-	_, err := fmt.Fprintln(os.Stderr, msg)
-	check(err)
-}
-
 func check(err error) {
 	if err != nil {
-		stderr(fmt.Sprintf("ERROR: %v", err))
+		_, err := fmt.Fprintln(os.Stderr, fmt.Sprintf("ERROR: %v", err))
+		check(err)
 	}
 }
 
@@ -106,7 +95,9 @@ func processFile(filename string) {
 	fileLines, majorityIndentStyle := DetectIndents(strings.Split(fileContents, "\n"))
 	for _, line := range fileLines {
 		printLine := func(errorCode int) {
-			stdout(fmt.Sprintf("%s:%d:MST%d:%s", filename, line.LineNumber, errorCode, formatLine(line.LineContents)))
+			msg := fmt.Sprintf("%s:%d:MST%d:%s", filename, line.LineNumber, errorCode, formatLine(line.LineContents))
+			_, err := fmt.Fprintln(os.Stdout, msg)
+			check(err)
 		}
 		if line.ErrorCode != 0 {
 			printLine(line.ErrorCode)
