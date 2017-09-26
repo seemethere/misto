@@ -19,6 +19,9 @@ build/$(BINARY_NAME): $(GOFILES)
 	mkdir -p build
 	go build -o $@ $?
 
+build-image:
+	docker build -t seemethere/misto .
+
 $(GOX):
 	go get github.com/mitchellh/gox
 
