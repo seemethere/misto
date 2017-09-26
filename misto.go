@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"regexp"
 	"strings"
@@ -12,19 +12,25 @@ import (
 
 var (
 	files                  = kingpin.Arg("files", "Files to parse through").Required().ExistingFiles()
-	indentation, _         = regexp.Compile("^\\s")
-	leadingTabWithSpace, _ = regexp.Compile("^\t+ +")
-	leadingSpaceWithTab, _ = regexp.Compile("^ +\t+")
+	indentation, _         = regexp.Compile(`^\s`)
+	leadingTabWithSpace, _ = regexp.Compile(`^\t+ +`)
+	leadingSpaceWithTab, _ = regexp.Compile(`^ +\t+`)
+	space                  = " "
+	tab                    = "\t"
+	newline                = "\n"
+	cr                     = "\r"
 )
 
 // Output to stdout
 func stdout(msg string) {
-	fmt.Fprintln(os.Stdout, msg) //nolint
+	_, err := fmt.Fprintln(os.Stdout, msg)
+	check(err)
 }
 
 // Output to stderr
 func stderr(msg string) {
-	fmt.Fprintln(os.Stderr, msg) //nolint
+	_, err := fmt.Fprintln(os.Stderr, msg)
+	check(err)
 }
 
 func check(err error) {
@@ -33,7 +39,7 @@ func check(err error) {
 	}
 }
 
-// Determines error code for a given line
+// DetectMixedIndent detects mixed indentation within a line
 // Error codes are as follows:
 //  * 1 = Leading tab(s) with following space(s)
 //  * 2 = Leading space(s) with following tab(s)
@@ -49,56 +55,73 @@ func DetectMixedIndent(line string) int {
 }
 
 func formatLine(line string) string {
-	formattedLine := strings.Replace(line, " ", "•", -1)
-	formattedLine = strings.Replace(formattedLine, "\t", "›   ", -1)
+	formattedLine := strings.Replace(line, space, "•", -1)
+	formattedLine = strings.Replace(formattedLine, tab, "›   ", -1)
 	return formattedLine
 }
 
+// FileLine represents a line in a file but with extra metadata
 type FileLine struct {
-	lineNo int
-	line   string
+	LineContents string
+	LineNumber   int
+	ErrorCode    int
+	IndentStyle  string
 }
 
-func parseFile(filename string) {
-	inFile, err := os.Open(filename)
-	check(err)
-	defer func() {
-		check(inFile.Close())
-	}()
-	scanner := bufio.NewScanner(inFile)
-
-	lineNo := 0
-	indents := make(map[string][]FileLine)
-	for scanner.Scan() {
-		line := scanner.Text()
-		// Skip lines that do not leading whitespace
-		indent := indentation.FindString(line)
-		if indent == "" {
-			continue
+// DetectIndents detects indentation within a file
+// returns fileLines in the form of a FileLine slice, also returns
+// the majorityIndentStyle, either a TAB or SPACE
+func DetectIndents(lines []string) (fileLines []FileLine, majorityIndentStyle string) {
+	majorityIndentStyle = space
+	tabCount := 0
+	spaceCount := 0
+	for lineNumber, line := range lines {
+		indentStyle := indentation.FindString(line)
+		switch indentStyle {
+		case space:
+			spaceCount++
+		case tab:
+			tabCount++
+		case cr, newline:
+			indentStyle = ""
 		}
-		linePrinted := false
-		printLine := func(errorCode int) {
-			if !linePrinted {
-				formattedLine := formatLine(line)
-				// Make tabs / spaces easier to see
-				stdout(fmt.Sprintf("%s:%d:MST%d %s", filename, lineNo, errorCode, formattedLine))
-				linePrinted = true
-			}
-		}
-		errorCode := DetectMixedIndent(line)
-		if errorCode == 0 {
-			indents[indent] = append(indents[indent], FileLine{lineNo, line})
-		} else {
-			printLine(errorCode)
-		}
-		lineNo++
+		fileLines = append(
+			fileLines,
+			FileLine{
+				LineContents: line,
+				LineNumber:   lineNumber + 1,
+				ErrorCode:    DetectMixedIndent(line),
+				IndentStyle:  indentStyle,
+			},
+		)
 	}
-	check(scanner.Err())
+	if tabCount > spaceCount {
+		majorityIndentStyle = tab
+	}
+	return fileLines, majorityIndentStyle
+}
+
+func processFile(filename string) {
+	byteContents, err := ioutil.ReadFile(filename)
+	check(err)
+	fileContents := string(byteContents)
+	fileLines, majorityIndentStyle := DetectIndents(strings.Split(fileContents, "\n"))
+	for _, line := range fileLines {
+		printLine := func(errorCode int) {
+			stdout(fmt.Sprintf("%s:%d:MST%d:%s", filename, line.LineNumber, errorCode, formatLine(line.LineContents)))
+		}
+		if line.ErrorCode != 0 {
+			printLine(line.ErrorCode)
+		}
+		if line.IndentStyle != "" && line.IndentStyle != majorityIndentStyle {
+			printLine(3)
+		}
+	}
 }
 
 func main() {
 	kingpin.Parse()
 	for _, file := range *files {
-		parseFile(file)
+		processFile(file)
 	}
 }
