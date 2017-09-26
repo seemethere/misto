@@ -12,6 +12,7 @@ import (
 
 var (
 	files                  = kingpin.Arg("files", "Files to parse through").Required().ExistingFiles()
+	indentation, _         = regexp.Compile("^\\s")
 	leadingTabWithSpace, _ = regexp.Compile("^\t+ +")
 	leadingSpaceWithTab, _ = regexp.Compile("^ +\t+")
 )
@@ -53,6 +54,11 @@ func formatLine(line string) string {
 	return formattedLine
 }
 
+type FileLine struct {
+	lineNo int
+	line   string
+}
+
 func parseFile(filename string) {
 	inFile, err := os.Open(filename)
 	check(err)
@@ -62,8 +68,14 @@ func parseFile(filename string) {
 	scanner := bufio.NewScanner(inFile)
 
 	lineNo := 0
+	indents := make(map[string][]FileLine)
 	for scanner.Scan() {
 		line := scanner.Text()
+		// Skip lines that do not leading whitespace
+		indent := indentation.FindString(line)
+		if indent == "" {
+			continue
+		}
 		linePrinted := false
 		printLine := func(errorCode int) {
 			if !linePrinted {
@@ -74,7 +86,9 @@ func parseFile(filename string) {
 			}
 		}
 		errorCode := DetectMixedIndent(line)
-		if errorCode != 0 {
+		if errorCode == 0 {
+			indents[indent] = append(indents[indent], FileLine{lineNo, line})
+		} else {
 			printLine(errorCode)
 		}
 		lineNo++
