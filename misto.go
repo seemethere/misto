@@ -88,29 +88,33 @@ func DetectIndents(lines []string) (fileLines []FileLine, majorityIndentStyle st
 	return fileLines, majorityIndentStyle
 }
 
-func processFile(filename string) {
+func processFile(filename string) int {
 	byteContents, err := ioutil.ReadFile(filename)
 	check(err)
 	fileContents := string(byteContents)
 	fileLines, majorityIndentStyle := DetectIndents(strings.Split(fileContents, "\n"))
+	exitStatus := 0
 	for _, line := range fileLines {
 		printLine := func(errorCode int) {
 			msg := fmt.Sprintf("%s:%d:MST%d:%s", filename, line.LineNumber, errorCode, formatLine(line.LineContents))
 			_, err := fmt.Fprintln(os.Stdout, msg)
 			check(err)
+			exitStatus++
 		}
 		if line.ErrorCode != 0 {
 			printLine(line.ErrorCode)
-		}
-		if line.IndentStyle != "" && line.IndentStyle != majorityIndentStyle {
+		} else if line.IndentStyle != "" && line.IndentStyle != majorityIndentStyle {
 			printLine(3)
 		}
 	}
+	return exitStatus
 }
 
 func main() {
 	kingpin.Parse()
+	exitStatus := 0
 	for _, file := range *files {
-		processFile(file)
+		exitStatus += processFile(file)
 	}
+	os.Exit(exitStatus)
 }
