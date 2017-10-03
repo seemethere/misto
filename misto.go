@@ -66,18 +66,23 @@ func DetectIndents(lines []string) (fileLines []FileLine, majorityIndentStyle st
 		// If the indent style doesn't match a SPACE or TAB
 		// this will return an empty string
 		indentStyle := indentation.FindString(line)
-		switch indentStyle {
-		case space:
-			spaceCount++
-		case tab:
-			tabCount++
+		errorCode := DetectMixedIndent(line)
+		// Don't count lines that have mixed indentation
+		// They could muddle results
+		if errorCode == 0 {
+			switch indentStyle {
+			case space:
+				spaceCount++
+			case tab:
+				tabCount++
+			}
 		}
 		fileLines = append(
 			fileLines,
 			FileLine{
 				LineContents: line,
 				LineNumber:   lineNumber + 1,
-				ErrorCode:    DetectMixedIndent(line),
+				ErrorCode:    errorCode,
 				IndentStyle:  indentStyle,
 			},
 		)
