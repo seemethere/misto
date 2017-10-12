@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/seemethere/misto.svg?branch=master)](https://travis-ci.org/seemethere/misto)
+
 ```
             _     _
            (_)   | |
@@ -12,7 +14,33 @@
 
 A project about finding mixed indentation within files.
 
+# Usage:
+
+```shell
+misto <filename>
+```
+
+**NOTE**: Misto currently only accepts filenames, use something like `find` or globs
+to specify multiple files!
+
+## Error codes:
+MST1: Leading tabs with spaces after
+MST2: Leading spaces with tabs after
+MST3: Indentation that does not match the majority indentation style
+
+## Exit status:
+The exit status indicates how many errors were found through the entire linting process
+
+# Installation:
+
+With `go install` (from `master`)
+```
+go install -u github.com/seemethere/misto
+```
+
 # Building:
+
+## Singular binaries
 
 With Docker:
 ```
@@ -24,12 +52,13 @@ Without Docker:
 make build
 ```
 
+## Cross compile binaries
+
+```
+make cross
+```
+
 # TODO:
 
-* Have a parser that determines the most common indentation in a file and
-finds lines that do not conform to that indentation style
-* Have command line options to:
+* [  ] Have command line options to:
   * Only print filenames if wanted
-* Add some tests
-* Maybe break the parsing rules into a library for other utilities to use?
-* Work with goroutines
