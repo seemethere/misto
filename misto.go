@@ -116,6 +116,7 @@ func processFile(filename string) int {
 }
 
 func main() {
+	kingpin.Version("0.1.0")
 	kingpin.Parse()
 	exitStatus := 0
 	for _, file := range *files {
