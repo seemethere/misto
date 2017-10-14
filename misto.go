@@ -17,6 +17,7 @@ var (
 	leadingSpaceWithTab, _ = regexp.Compile(`^ +\t+`)
 	space                  = " "
 	tab                    = "\t"
+	fileNamesOnly          = kingpin.Flag("file-names-only", "Print file names only").Short('n').Bool()
 )
 
 func check(err error) {
@@ -101,9 +102,11 @@ func processFile(filename string) int {
 	exitStatus := 0
 	for _, line := range fileLines {
 		printLine := func(errorCode int) {
-			msg := fmt.Sprintf("%s:%d:MST%d:%s", filename, line.LineNumber, errorCode, formatLine(line.LineContents))
-			_, err := fmt.Fprintln(os.Stdout, msg)
-			check(err)
+			if ! *fileNamesOnly {
+				msg := fmt.Sprintf("%s:%d:MST%d:%s", filename, line.LineNumber, errorCode, formatLine(line.LineContents))
+				_, err := fmt.Fprintln(os.Stdout, msg)
+				check(err)
+			}
 			exitStatus++
 		}
 		if line.ErrorCode != 0 {
@@ -111,6 +114,10 @@ func processFile(filename string) int {
 		} else if line.IndentStyle != "" && line.IndentStyle != majorityIndentStyle {
 			printLine(3)
 		}
+	}
+
+	if exitStatus > 0 && *fileNamesOnly {
+		fmt.Fprintln(os.Stdout, filename)
 	}
 	return exitStatus
 }
