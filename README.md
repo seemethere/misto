@@ -23,6 +23,9 @@ misto <filename>
 **NOTE**: Misto currently only accepts filenames, use something like `find` or globs
 to specify multiple files!
 
+## Options
+`--file-names-only` - Prints file names only
+
 ## Error codes:
 MST1: Leading tabs with spaces after
 MST2: Leading spaces with tabs after
@@ -58,7 +61,3 @@ make build
 make cross
 ```
 
-# TODO:
-
-* [  ] Have command line options to:
-  * Only print filenames if wanted
